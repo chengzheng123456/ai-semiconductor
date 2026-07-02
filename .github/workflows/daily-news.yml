@@ -7,7 +7,7 @@ on:
   workflow_dispatch:  # 支持手动触发
 
 permissions:
-  contents: write  # 允许 Actions 写入仓库
+  contents: write  # 允许 GITHUB_TOKEN 写入仓库
 
 jobs:
   crawl:
@@ -26,25 +26,16 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Run news crawler
+      - name: Run news crawler (generate report + push to GitHub + send WeChat)
         env:
           PUSHPLUS_TOKEN: ${{ secrets.PUSHPLUS_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: python news_crawler.py
 
-      - name: Commit and push report
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Show generated report
         run: |
-          git config user.name "longmao-bot"
-          git config user.email "longmao@users.noreply.github.com"
           today=$(date -u +"%Y-%m-%d")
-          mkdir -p news
           if [ -f output/${today}.md ]; then
-            cp output/${today}.md news/${today}.md
-            git add news/${today}.md
-            git commit -m "Auto: add news report ${today}" || echo "No changes to commit"
-            git push
-          else
-            echo "No output file found"
+            echo "=== 生成的报告 ==="
+            head -30 output/${today}.md
           fi
